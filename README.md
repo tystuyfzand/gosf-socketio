@@ -1,15 +1,17 @@
 golang socket.io
 ================
 
-golang implementation of [socket.io](http://socket.io) library, client and server
+GoLang implementation of [socket.io](http://socket.io) library, client and server.
 
-You can check working chat server, based on caller library, at http://funstream.tv
+This library is maintained for [GOSF](https://github.com/ambelovsky/gosf), the GoLang SocketIO Framework.
 
 Examples directory contains simple client and server.
 
-### Installation
+### Get It
 
-    go get github.com/ambelovsky/gosf-socketio
+```sh
+go get -u github.com/ambelovsky/gosf-socketio
+```
 
 ### Simple server usage
 
@@ -155,14 +157,6 @@ var socket = io('ws://yourdomain.com', {transports: ['websocket']});
 	c.Close()
 ```
 
-### Roadmap
+## License
 
-1. Tests
-2. Travis CI
-3. http longpoll transport
-4. pure http (short-timed queries) transport
-5. binary format
-
-### Licence
-
-Double licensed under GPL3 and MIT so you can use whichever you please.
+MIT
