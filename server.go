@@ -7,12 +7,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/graarh/golang-socketio/protocol"
-	"github.com/graarh/golang-socketio/transport"
 	"math/rand"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/ambelovsky/gosf-socketio/protocol"
+	"github.com/ambelovsky/gosf-socketio/transport"
 )
 
 const (
@@ -43,7 +44,7 @@ type Server struct {
 
 /**
 Close current channel
- */
+*/
 func (c *Channel) Close() {
 	if c.server != nil {
 		closeChannel(c, &c.server.methods)
@@ -284,7 +285,7 @@ func onDisconnectCleanup(c *Channel) {
 
 		delete(c.server.rooms, c)
 	}
-	
+
 	go deleteSid(c)
 }
 

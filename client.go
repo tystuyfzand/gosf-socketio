@@ -1,9 +1,10 @@
 package gosocketio
 
 import (
-	"github.com/graarh/golang-socketio/transport"
 	"net"
 	"strconv"
+
+	"github.com/ambelovsky/gosf-socketio/transport"
 )
 
 const (
