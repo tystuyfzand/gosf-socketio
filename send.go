@@ -25,6 +25,7 @@ func send(msg *protocol.Message, c *Channel, args interface{}) error {
 		}
 	}()
 
+	log.Println("t1")
 	if args != nil {
 		json, err := json.Marshal(&args)
 		if err != nil {
@@ -33,15 +34,18 @@ func send(msg *protocol.Message, c *Channel, args interface{}) error {
 
 		msg.Args = string(json)
 	}
+	log.Println("t2")
 
 	command, err := protocol.Encode(msg)
 	if err != nil {
 		return err
 	}
+	log.Println("t3")
 
 	if len(c.out) == queueBufferSize {
 		return ErrorSocketOverflood
 	}
+	log.Println("t4")
 
 	c.out <- command
 
