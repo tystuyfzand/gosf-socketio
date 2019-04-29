@@ -33,6 +33,8 @@ func send(msg *protocol.Message, c *Channel, args interface{}) error {
 		}
 
 		msg.Args = string(json)
+
+		log.Println(msg.Args)
 	}
 	log.Println("t2")
 
