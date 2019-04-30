@@ -90,13 +90,13 @@ type WebsocketTransport struct {
 	SendTimeout    time.Duration
 
 	BufferSize  int
-	InsecureTLS bool
+	UnsecureTLS bool
 
 	RequestHeader http.Header
 }
 
 func (wst *WebsocketTransport) Connect(url string) (conn Connection, err error) {
-	dialer := websocket.Dialer{TLSClientConfig: &tls.Config{InsecureSkipVerify: wst.InsecureTLS}}
+	dialer := websocket.Dialer{TLSClientConfig: &tls.Config{InsecureSkipVerify: wst.UnsecureTLS}}
 	socket, _, err := dialer.Dial(url, wst.RequestHeader)
 	if err != nil {
 		return nil, err
@@ -137,6 +137,6 @@ func GetDefaultWebsocketTransport() *WebsocketTransport {
 		ReceiveTimeout: WsDefaultReceiveTimeout,
 		SendTimeout:    WsDefaultSendTimeout,
 		BufferSize:     WsDefaultBufferSize,
-		InsecureTLS:    false,
+		UnsecureTLS:    false,
 	}
 }
