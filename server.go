@@ -32,6 +32,7 @@ type Server struct {
 	methods
 	http.Handler
 
+	headers      map[string]string
 	channels     map[string]map[*Channel]struct{}
 	rooms        map[*Channel]map[string]struct{}
 	channelsLock sync.RWMutex
@@ -347,6 +348,10 @@ func (s *Server) SetupEventLoop(conn transport.Connection, remoteAddr string,
 implements ServeHTTP function from http.Handler
 */
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for key, el := range s.headers {
+		w.Header().Set(key, el)
+	}
+
 	conn, err := s.tr.HandleConnection(w, r)
 	if err != nil {
 		return
@@ -377,12 +382,35 @@ func (s *Server) AmountOfRooms() int64 {
 }
 
 /**
+Enables CORS for all domains
+*/
+func (s *Server) EnableCORS(domain string) {
+	s.headers["Access-Control-Allow-Origin"] = domain
+	s.headers["Access-Control-Allow-Credentials"] = "true"
+}
+
+/**
+Add a header to HTTP responses
+*/
+func (s *Server) AddHeader(name string, value string) {
+	s.headers[name] = value
+}
+
+/**
+Replaces the pre-configured transport
+*/
+func (s *Server) UpdateTransport(tr transport.Transport) {
+	s.tr = tr
+}
+
+/**
 Create new socket.io server
 */
 func NewServer(tr transport.Transport) *Server {
 	s := Server{}
 	s.initMethods()
 	s.tr = tr
+	s.headers = make(map[string]string)
 	s.channels = make(map[string]map[*Channel]struct{})
 	s.rooms = make(map[*Channel]map[string]struct{})
 	s.sids = make(map[string]*Channel)
