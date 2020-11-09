@@ -206,7 +206,20 @@ func (c *Channel) BroadcastTo(room, method string, args interface{}) {
 	if c.server == nil {
 		return
 	}
-	c.server.BroadcastTo(room, method, args)
+
+	c.server.channelsLock.RLock()
+	defer c.server.channelsLock.RUnlock()
+
+	roomChannels, ok := c.server.channels[room]
+	if !ok {
+		return
+	}
+
+	for cn := range roomChannels {
+		if cn.Id() != c.Id() && cn.IsAlive() {
+			go cn.Emit(method, args)
+		}
+	}
 }
 
 /**
