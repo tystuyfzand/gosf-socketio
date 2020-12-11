@@ -60,7 +60,7 @@ create channel, map, and set active
 func (c *Channel) initChannel() {
 	//TODO: queueBufferSize from constant to server or client variable
 	c.out = make(chan string, queueBufferSize)
-	c.ack.resultWaiters = make(map[int](chan string))
+	c.ack.resultWaiters = make(map[int]chan interface{})
 	c.alive = true
 }
 
@@ -140,7 +140,7 @@ func inLoop(c *Channel, m *methods) error {
 	return nil
 }
 
-var overflooded map[*Channel]struct{} = make(map[*Channel]struct{})
+var overflooded = make(map[*Channel]struct{})
 var overfloodedLock sync.Mutex
 
 func AmountOfOverflooded() int64 {

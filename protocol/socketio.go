@@ -3,6 +3,7 @@ package protocol
 import (
 	"encoding/json"
 	"errors"
+	"github.com/valyala/fastjson"
 	"strconv"
 	"strings"
 )
@@ -58,21 +59,54 @@ func Encode(msg *Message) (string, error) {
 	if msg.Type == MessageTypeAckRequest || msg.Type == MessageTypeAckResponse {
 		result += strconv.Itoa(msg.AckId)
 	}
+	var argStr string
+
+	if msg.Args != nil {
+		argVal, err := json.Marshal(msg.Args)
+
+		if err != nil {
+			return "", err
+		}
+
+		argStr = string(argVal)
+	}
 
 	if msg.Type == MessageTypeOpen || msg.Type == MessageTypeClose {
-		return result + msg.Args, nil
+		return result + argStr, nil
 	}
 
 	if msg.Type == MessageTypeAckResponse {
-		return result + "[" + msg.Args + "]", nil
+		return result + argStr, nil
 	}
 
 	jsonMethod, err := json.Marshal(&msg.Method)
+
 	if err != nil {
 		return "", err
 	}
 
-	return result + "[" + string(jsonMethod) + "," + msg.Args + "]", nil
+	if msg.Args == nil {
+		return result + "[" + string(jsonMethod) + "]", nil
+	}
+
+	var ok bool
+	var args []interface{}
+
+	if args, ok = msg.Args.([]interface{}); !ok {
+		args = []interface{}{msg.Args}
+	}
+
+	msg.Args = append([]interface{}{msg.Method}, args...)
+
+	argVal, err := json.Marshal(msg.Args)
+
+	if err != nil {
+		return "", err
+	}
+
+	argStr = string(argVal)
+
+	return result + argStr, nil
 }
 
 func MustEncode(msg *Message) string {
@@ -135,40 +169,9 @@ func getAck(text string) (ackId int, restText string, err error) {
 	return ack, text[pos:], nil
 }
 
-/**
-Get message method of current packet, if present
-*/
-func getMethod(text string) (method, restText string, err error) {
-	var start, end, rest, countQuote int
-
-	for i, c := range text {
-		if c == '"' {
-			switch countQuote {
-			case 0:
-				start = i + 1
-			case 1:
-				end = i
-				rest = i + 1
-			default:
-				return "", "", ErrorWrongPacket
-			}
-			countQuote++
-		}
-		if c == ',' {
-			if countQuote < 2 {
-				continue
-			}
-			rest = i + 1
-			break
-		}
-	}
-
-	if (end < start) || (rest >= len(text)) {
-		return "", "", ErrorWrongPacket
-	}
-
-	return text[start:end], text[rest : len(text)-1], nil
-}
+var (
+	pool fastjson.ParserPool
+)
 
 func Decode(data string) (*Message, error) {
 	var err error
@@ -180,13 +183,19 @@ func Decode(data string) (*Message, error) {
 		return nil, err
 	}
 
-	if msg.Type == MessageTypeOpen {
-		msg.Args = data[1:]
+	if msg.Type == MessageTypeClose || msg.Type == MessageTypePing ||
+		msg.Type == MessageTypePong || msg.Type == MessageTypeEmpty {
 		return msg, nil
 	}
 
-	if msg.Type == MessageTypeClose || msg.Type == MessageTypePing ||
-		msg.Type == MessageTypePong || msg.Type == MessageTypeEmpty {
+	if msg.Type == MessageTypeOpen {
+		vals := make([]interface{}, 0)
+
+		if err = json.Unmarshal([]byte(data[1:]), &vals); err != nil {
+			return nil, err
+		}
+
+		msg.Args = vals
 		return msg, nil
 	}
 
@@ -196,7 +205,13 @@ func Decode(data string) (*Message, error) {
 		if err != nil {
 			return nil, err
 		}
-		msg.Args = rest[1 : len(rest)-1]
+		vals := make([]interface{}, 0)
+
+		if err = json.Unmarshal([]byte(rest), &vals); err != nil {
+			return nil, err
+		}
+
+		msg.Args = vals
 		return msg, nil
 	}
 
@@ -205,10 +220,15 @@ func Decode(data string) (*Message, error) {
 		rest = data[2:]
 	}
 
-	msg.Method, msg.Args, err = getMethod(rest)
-	if err != nil {
+	vals := make([]interface{}, 0)
+
+	if err = json.Unmarshal([]byte(rest), &vals); err != nil {
 		return nil, err
 	}
+
+	msg.Method = vals[0].(string)
+
+	msg.Args = vals[1:]
 
 	return msg, nil
 }

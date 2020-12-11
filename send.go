@@ -1,7 +1,6 @@
 package gosocketio
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"time"
@@ -26,12 +25,7 @@ func send(msg *protocol.Message, c *Channel, args interface{}) error {
 	}()
 
 	if args != nil {
-		json, err := json.Marshal(&args)
-		if err != nil {
-			return err
-		}
-
-		msg.Args = string(json)
+		msg.Args = args
 	}
 
 	command, err := protocol.Encode(msg)
@@ -63,14 +57,14 @@ func (c *Channel) Emit(method string, args interface{}) error {
 /**
 Create ack packet based on given data and send it and receive response
 */
-func (c *Channel) Ack(method string, args interface{}, timeout time.Duration) (string, error) {
+func (c *Channel) Ack(method string, args interface{}, timeout time.Duration) (interface{}, error) {
 	msg := &protocol.Message{
 		Type:   protocol.MessageTypeAckRequest,
 		AckId:  c.ack.getNextId(),
 		Method: method,
 	}
 
-	waiter := make(chan string)
+	waiter := make(chan interface{})
 	c.ack.addWaiter(msg.AckId, waiter)
 
 	err := send(msg, c, args)

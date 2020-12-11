@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -311,15 +310,10 @@ func deleteSid(c *Channel) {
 }
 
 func (s *Server) SendOpenSequence(c *Channel) {
-	jsonHdr, err := json.Marshal(&c.header)
-	if err != nil {
-		panic(err)
-	}
-
 	c.out <- protocol.MustEncode(
 		&protocol.Message{
 			Type: protocol.MessageTypeOpen,
-			Args: string(jsonHdr),
+			Args: &c.header,
 		},
 	)
 

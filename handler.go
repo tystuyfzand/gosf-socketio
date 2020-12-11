@@ -1,7 +1,6 @@
 package gosocketio
 
 import (
-	"encoding/json"
 	"reflect"
 	"sync"
 
@@ -77,7 +76,7 @@ func (m *methods) callLoopEvent(c *Channel, event string) {
 		return
 	}
 
-	f.callFunc(c, &struct{}{})
+	f.callFunc(c)
 }
 
 /**
@@ -94,18 +93,16 @@ func (m *methods) processIncomingMessage(c *Channel, msg *protocol.Message) {
 			return
 		}
 
-		if !f.ArgsPresent {
-			f.callFunc(c, &struct{}{})
-			return
+		if f.ArgsPresent {
+			switch data := msg.Args.(type) {
+			case []interface{}:
+				f.callFunc(c, data...)
+			default:
+				f.callFunc(c, data)
+			}
+		} else {
+			f.callFunc(c)
 		}
-
-		data := f.getArgs()
-		err := json.Unmarshal([]byte(msg.Args), &data)
-		if err != nil {
-			return
-		}
-
-		f.callFunc(c, data)
 
 	case protocol.MessageTypeAckRequest:
 		f, ok := m.findMethod(msg.Method)
@@ -115,16 +112,14 @@ func (m *methods) processIncomingMessage(c *Channel, msg *protocol.Message) {
 
 		var result []reflect.Value
 		if f.ArgsPresent {
-			//data type should be defined for unmarshall
-			data := f.getArgs()
-			err := json.Unmarshal([]byte(msg.Args), &data)
-			if err != nil {
-				return
+			switch data := msg.Args.(type) {
+			case []interface{}:
+				result = f.callFunc(c, data...)
+			default:
+				result = f.callFunc(c, data)
 			}
-
-			result = f.callFunc(c, data)
 		} else {
-			result = f.callFunc(c, &struct{}{})
+			result = f.callFunc(c)
 		}
 
 		ack := &protocol.Message{
