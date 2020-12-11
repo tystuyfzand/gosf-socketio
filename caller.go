@@ -106,13 +106,12 @@ func (c *caller) callFunc(h *Channel, args ...interface{}) []reflect.Value {
 			case reflect.Float32:
 				iface = float32(arg.(float64))
 			case reflect.Struct:
-				// TODO: This may not be right...
-				iface = reflect.New(c.Args[i]).Elem()
+				iface = reflect.New(c.Args[i]).Elem().Interface()
 
 				mapstructure.Decode(arg, &iface)
 			case reflect.Ptr:
 				// TODO: This may not be right...
-				iface = reflect.New(c.Args[i].Elem()).Elem()
+				iface = reflect.New(c.Args[i].Elem()).Interface()
 
 				mapstructure.Decode(arg, &iface)
 			default:
