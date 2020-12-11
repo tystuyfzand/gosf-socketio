@@ -2,8 +2,8 @@ package gosocketio
 
 import (
 	"errors"
-	"reflect"
 	"github.com/mitchellh/mapstructure"
+	"reflect"
 )
 
 type caller struct {
@@ -42,9 +42,9 @@ func newCaller(f interface{}) (*caller, error) {
 		curCaller.Args = nil
 		curCaller.ArgsPresent = false
 	} else if fType.NumIn() >= 2 {
-		types := make([]reflect.Type, fType.NumIn() - 1)
+		types := make([]reflect.Type, fType.NumIn()-1)
 		for i := 0; i < len(types); i++ {
-			types[i] = fType.In(i+1)
+			types[i] = fType.In(i + 1)
 		}
 		curCaller.Args = types
 		curCaller.ArgsPresent = true

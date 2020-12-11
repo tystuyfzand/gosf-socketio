@@ -3,7 +3,6 @@ package protocol
 import (
 	"encoding/json"
 	"errors"
-	"github.com/valyala/fastjson"
 	"strconv"
 	"strings"
 )
@@ -16,8 +15,8 @@ const (
 	ackMessage    = "43"
 
 	CloseMessage = "1"
-	PingMessage = "2"
-	PongMessage = "3"
+	PingMessage  = "2"
+	PongMessage  = "3"
 )
 
 var (
@@ -168,10 +167,6 @@ func getAck(text string) (ackId int, restText string, err error) {
 
 	return ack, text[pos:], nil
 }
-
-var (
-	pool fastjson.ParserPool
-)
 
 func Decode(data string) (*Message, error) {
 	var err error
