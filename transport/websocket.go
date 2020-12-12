@@ -136,6 +136,10 @@ func GetDefaultWebsocketTransport() *WebsocketTransport {
 		upgrader: &websocket.Upgrader{
 			ReadBufferSize:  WsDefaultBufferSize,
 			WriteBufferSize: WsDefaultBufferSize,
+			CheckOrigin: func(r *http.Request) bool {
+				// allow all connections by default
+				return true
+			},
 		},
 		PingInterval:   WsDefaultPingInterval,
 		PingTimeout:    WsDefaultPingTimeout,
