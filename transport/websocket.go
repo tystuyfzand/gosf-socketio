@@ -84,12 +84,13 @@ func (wsc *WebsocketConnection) PingParams() (interval, timeout time.Duration) {
 }
 
 type WebsocketTransport struct {
+	upgrader *websocket.Upgrader
+
 	PingInterval   time.Duration
 	PingTimeout    time.Duration
 	ReceiveTimeout time.Duration
 	SendTimeout    time.Duration
 
-	BufferSize  int
 	UnsecureTLS bool
 
 	RequestHeader http.Header
@@ -113,7 +114,7 @@ func (wst *WebsocketTransport) HandleConnection(
 		return nil, ErrorMethodNotAllowed
 	}
 
-	socket, err := websocket.Upgrade(w, r, nil, wst.BufferSize, wst.BufferSize)
+	socket, err := wst.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, upgradeFailed+err.Error(), 503)
 		return nil, ErrorHttpUpgradeFailed
@@ -132,11 +133,14 @@ Returns websocket connection with default params
 */
 func GetDefaultWebsocketTransport() *WebsocketTransport {
 	return &WebsocketTransport{
+		upgrader: &websocket.Upgrader{
+			ReadBufferSize:  WsDefaultBufferSize,
+			WriteBufferSize: WsDefaultBufferSize,
+		},
 		PingInterval:   WsDefaultPingInterval,
 		PingTimeout:    WsDefaultPingTimeout,
 		ReceiveTimeout: WsDefaultReceiveTimeout,
 		SendTimeout:    WsDefaultSendTimeout,
-		BufferSize:     WsDefaultBufferSize,
 		UnsecureTLS:    false,
 	}
 }
