@@ -82,40 +82,51 @@ func (c *caller) callFunc(h *Channel, args ...interface{}) []reflect.Value {
 		for i, arg := range args {
 			var iface interface{}
 
-			switch c.Args[i].Kind() {
-			case reflect.Int:
-				iface = int(arg.(float64))
-			case reflect.Int8:
-				iface = int8(arg.(float64))
-			case reflect.Int16:
-				iface = int16(arg.(float64))
-			case reflect.Int32:
-				iface = int32(arg.(float64))
-			case reflect.Int64:
-				iface = int64(arg.(float64))
-			case reflect.Uint:
-				iface = uint(arg.(float64))
-			case reflect.Uint8:
-				iface = uint8(arg.(float64))
-			case reflect.Uint16:
-				iface = uint16(arg.(float64))
-			case reflect.Uint32:
-				iface = uint32(arg.(float64))
-			case reflect.Uint64:
-				iface = uint64(arg.(float64))
-			case reflect.Float32:
-				iface = float32(arg.(float64))
-			case reflect.Struct:
-				iface = reflect.New(c.Args[i]).Elem().Interface()
+			if f, ok := arg.(float64); ok {
+				switch c.Args[i].Kind() {
+				case reflect.Int:
+					iface = int(f)
+				case reflect.Int8:
+					iface = int8(f)
+				case reflect.Int16:
+					iface = int16(f)
+				case reflect.Int32:
+					iface = int32(f)
+				case reflect.Int64:
+					iface = int64(f)
+				case reflect.Uint:
+					iface = uint(f)
+				case reflect.Uint8:
+					iface = uint8(f)
+				case reflect.Uint16:
+					iface = uint16(f)
+				case reflect.Uint32:
+					iface = uint32(f)
+				case reflect.Uint64:
+					iface = uint64(f)
+				case reflect.Float32:
+					iface = float32(f)
+				case reflect.Float64:
+					iface = f
+				}
+			} else {
+				switch c.Args[i].Kind() {
+				case reflect.Struct:
+					iface = reflect.New(c.Args[i]).Elem().Interface()
 
-				mapstructure.Decode(arg, &iface)
-			case reflect.Ptr:
-				// TODO: This may not be right...
-				iface = reflect.New(c.Args[i].Elem()).Interface()
+					if err := mapstructure.Decode(arg, &iface); err != nil {
+						panic(err)
+					}
+				case reflect.Ptr:
+					// TODO: This may not be right...
+					iface = reflect.New(c.Args[i].Elem()).Interface()
 
-				mapstructure.Decode(arg, &iface)
-			default:
-				iface = arg
+					if err := mapstructure.Decode(arg, &iface); err != nil {
+						panic(err)
+					}
+				default:
+					iface = arg
+				}
 			}
 
 			a = append(a, reflect.ValueOf(iface))

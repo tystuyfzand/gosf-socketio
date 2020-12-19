@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/tystuyfzand/gosf-socketio/protocol"
 )
 
@@ -86,6 +87,16 @@ On ack_req - look for processing function and send ack_resp
 On emit - look for processing function
 */
 func (m *methods) processIncomingMessage(c *Channel, msg *protocol.Message) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.WithFields(log.Fields{
+				"error":  r,
+				"method": msg.Method,
+				"args":   msg.Args,
+			}).Error("Panic recovered while calling handler")
+		}
+	}()
+
 	switch msg.Type {
 	case protocol.MessageTypeEmit:
 		f, ok := m.findMethod(msg.Method)
